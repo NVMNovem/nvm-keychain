@@ -2,23 +2,30 @@ import Foundation
 
 public class NVMKeychain {
     
+    private let keychainType: NVMKeychainType
+    
     private var synchronize: Bool
     private var accessControl: AccessControl?
     
-    public init(synchronize: Bool = false,
-                accessControl: AccessControl? = nil) {
+    public init(
+        _ keychainType: NVMKeychainType,
+        synchronize: Bool = false,
+        accessControl: AccessControl? = nil
+    ) {
+        self.keychainType = keychainType
+        
         self.synchronize = synchronize
         self.accessControl = accessControl
     }
     
     typealias ItemDictionary = [String: Any]
     
-    public func add<K: NVMKeychainType>(_ value: K, for key: String) throws {
-        try self.store(value: value, key: key)
+    public func add<K: NVMKey>(_ value: K, for key: String) throws {
+        try self.store(value: value.keyData(), tag: key)
     }
     
-    public func get<K: NVMKeychainType>(_ returnBlock: K, for key: String) throws -> K {
-        return try self.retrieve(returnBlock: returnBlock, key: key)
+    public func get<K: NVMKey>(_ type: K.Type, for key: String) throws -> K {
+        return try self.retrieve(type: type, tag: key)
     }
     
     public enum AccessControl {
@@ -32,15 +39,15 @@ public class NVMKeychain {
         }
     }
     
-    private func store<K: NVMKeychainType>(value: K, key: String) throws {
-        let addquery = try value.createAddQuery(key: key)
+    private func store(value: Data, tag: String) throws {
+        let addquery = try keychainType.createAddQuery(for: tag, key: value)
         
         let status = SecItemAdd(addquery as CFDictionary, nil)
         guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(status: status) }
     }
     
-    private func retrieve<K: NVMKeychainType>(returnBlock: K, key: String) throws -> K {
-        let getquery = try returnBlock.createGetQuery(key: key)
+    private func retrieve<K: NVMKey>(type: K.Type, tag: String) throws -> K {
+        let getquery = try keychainType.createGetQuery(for: tag)
         
         var item: CFTypeRef?
         let status = SecItemCopyMatching(getquery as CFDictionary, &item)
@@ -50,6 +57,10 @@ public class NVMKeychain {
         guard let existingItem = item as? ItemDictionary
         else { throw NVMKeychainError.invalidKeychainType }
         
-        return try returnBlock.apply(item: existingItem)
+        guard let keyData = existingItem[kSecValueData as String] as? Data,
+              let nvmKey = type.init(keyData: keyData)
+        else { throw NVMKeychainError.invalidPasswordData }
+        
+        return nvmKey
     }
 }
