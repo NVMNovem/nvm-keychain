@@ -9,8 +9,8 @@ import Foundation
 
 public enum NVMKeychainType {
     
+    case internetCredentials(username: String, server: String?)
     case credentials(username: String, server: String? = nil)
-    case password
     case key
 }
 
@@ -18,9 +18,9 @@ internal extension NVMKeychainType {
     
     var cfString: CFString {
         switch self {
-        case .credentials:
+        case .internetCredentials:
             return kSecClassInternetPassword
-        case .password:
+        case .credentials:
             return kSecClassGenericPassword
         case .key:
             return kSecClassKey
@@ -30,7 +30,7 @@ internal extension NVMKeychainType {
 
 internal extension NVMKeychainType {
     
-    func createAddQuery(for tag: String, key: Data) throws -> NVMKeychain.ItemDictionary {
+    func createAddQuery(for tag: String, accessControl: NVMKeychain.AccessControl?, key: Data) throws -> NVMKeychain.ItemDictionary {
         let keyIdentifier = try self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
@@ -38,6 +38,7 @@ internal extension NVMKeychainType {
             kSecAttrApplicationTag as String: tag,
             kSecValueData as String: key
         ]
+            .setAccessControl(accessControl)
             .setClass(self)
             .setServer(self)
             .setAccount(self)
@@ -45,7 +46,7 @@ internal extension NVMKeychainType {
         return mutableQuery
     }
     
-    func createGetQuery(for tag: String) throws -> NVMKeychain.ItemDictionary {
+    func createGetQuery(for tag: String, accessControl: NVMKeychain.AccessControl?) throws -> NVMKeychain.ItemDictionary {
         let keyIdentifier = try self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
@@ -55,6 +56,7 @@ internal extension NVMKeychainType {
             kSecReturnAttributes as String: true,
             kSecReturnData as String: true
         ]
+            .setAccessControl(accessControl)
             .setClass(self)
             .setServer(self)
             .setAccount(self)
@@ -72,6 +74,15 @@ internal extension NVMKeychainType {
 
 extension NVMKeychain.ItemDictionary {
     
+    fileprivate func setAccessControl(_ accessControl: NVMKeychain.AccessControl?) -> Self {
+        guard let cfAccessControl = accessControl?.cfString else { return self }
+        
+        var mutableDictionary = self
+        mutableDictionary.updateValue(cfAccessControl, forKey: kSecAttrAccessible as String)
+        
+        return mutableDictionary
+    }
+    
     fileprivate func setClass(_ type: NVMKeychainType) -> Self {
         let cfClass = type.cfString
         
@@ -83,11 +94,10 @@ extension NVMKeychain.ItemDictionary {
     
     fileprivate func setAccount(_ type: NVMKeychainType) -> Self {
         switch type {
+        case .internetCredentials(let username, _):
+            return self.addString(username, forKey: kSecAttrAccount)
         case .credentials(let username, _):
-            var mutableDictionary = self
-            mutableDictionary.updateValue(username, forKey: kSecAttrAccount as String)
-            
-            return mutableDictionary
+            return self.addString(username, forKey: kSecAttrAccount)
         default:
             return self
         }
@@ -95,15 +105,21 @@ extension NVMKeychain.ItemDictionary {
     
     fileprivate func setServer(_ type: NVMKeychainType) -> Self {
         switch type {
+        case .internetCredentials(_, let server):
+            return self.addString(server, forKey: kSecAttrServer)
         case .credentials(_, let server):
-            guard let server else { return self }
-            
-            var mutableDictionary = self
-            mutableDictionary.updateValue(server, forKey: kSecAttrServer as String)
-            
-            return mutableDictionary
+            return self.addString(server, forKey: kSecAttrServer)
         default:
             return self
         }
+    }
+    
+    private func addString(_ value: String?, forKey key: CFString) -> Self {
+        guard let value else { return self }
+        
+        var mutableDictionary = self
+        mutableDictionary.updateValue(value, forKey: key as String)
+        
+        return mutableDictionary
     }
 }

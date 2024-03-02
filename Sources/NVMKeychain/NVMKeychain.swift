@@ -30,24 +30,36 @@ public class NVMKeychain {
     
     public enum AccessControl {
         case whenPasscodeSetThisDeviceOnly
+        case whenUnlockedThisDeviceOnly
+        case whenUnlocked
+        case afterFirstUnlockThisDeviceOnly
+        case afterFirstUnlock
         
         var cfString: CFString {
             switch self {
             case .whenPasscodeSetThisDeviceOnly:
                 return kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly
+            case .whenUnlockedThisDeviceOnly:
+                return kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            case .whenUnlocked:
+                return kSecAttrAccessibleWhenUnlocked
+            case .afterFirstUnlockThisDeviceOnly:
+                return kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            case .afterFirstUnlock:
+                return kSecAttrAccessibleAfterFirstUnlock
             }
         }
     }
     
     private func store(value: Data, tag: String) throws {
-        let addquery = try keychainType.createAddQuery(for: tag, key: value)
+        let addquery = try keychainType.createAddQuery(for: tag, accessControl: accessControl, key: value)
         
         let status = SecItemAdd(addquery as CFDictionary, nil)
         guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(status: status) }
     }
     
     private func retrieve<K: NVMKey>(type: K.Type, tag: String) throws -> K {
-        let getquery = try keychainType.createGetQuery(for: tag)
+        let getquery = try keychainType.createGetQuery(for: tag, accessControl: accessControl)
         
         var item: CFTypeRef?
         let status = SecItemCopyMatching(getquery as CFDictionary, &item)
