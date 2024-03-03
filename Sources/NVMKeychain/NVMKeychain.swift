@@ -20,12 +20,46 @@ public class NVMKeychain {
     
     typealias ItemDictionary = [String: Any]
     
-    public func add<K: NVMKey>(_ value: K, for key: String) throws {
+    /// Create an item in the `Keychain`.
+    ///
+    /// - Throws: An error when the item already exists. Use `add(_:for:)` when you need to create or update an item.
+    ///
+    public func create<K: NVMKey>(_ value: K, for key: String) throws {
         try self.store(value: value.keyData(), tag: key)
     }
     
+    /// Create or update an item in the `Keychain`.
+    ///
+    /// - Note: Will update the value when the item already exists.
+    /// 
+    public func add<K: NVMKey>(_ value: K, for key: String) throws {
+        do {
+            try self.store(value: value.keyData(), tag: key)
+        } catch NVMKeychainStoreError.duplicateItem {
+            try self.update(value, for: key)
+        } catch {
+            throw error
+        }
+    }
+    
+    /// Create or update an item in the `Keychain`.
+    ///
+    /// - Note: Will update the value when the item already exists.
+    ///
+    public func update<K: NVMKey>(_ value: K, for key: String) throws {
+        try self.update(value: value.keyData(), tag: key)
+    }
+    
+    /// Retrieve an item from the `Keychain`.
+    ///
     public func get<K: NVMKey>(_ type: K.Type, for key: String) throws -> K {
         return try self.retrieve(type: type, tag: key)
+    }
+    
+    /// Remove an item from the `Keychain`.
+    ///
+    public func delete(_ key: String) throws {
+        return try self.remove(tag: key)
     }
     
     public enum AccessControl {
@@ -58,6 +92,14 @@ public class NVMKeychain {
         guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(NVMKeychainStoreError(status)) }
     }
     
+    private func update(value: Data, tag: String) throws {
+        let getquery = try keychainType.createGetQuery(for: tag, accessControl: accessControl)
+        let addquery = try keychainType.createAddQuery(for: tag, accessControl: accessControl, key: value)
+        
+        let status = SecItemUpdate(getquery as CFDictionary, addquery as CFDictionary)
+        guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(NVMKeychainStoreError(status)) }
+    }
+    
     private func retrieve<K: NVMKey>(type: K.Type, tag: String) throws -> K {
         let getquery = try keychainType.createGetQuery(for: tag, accessControl: accessControl)
         
@@ -74,5 +116,12 @@ public class NVMKeychain {
         else { throw NVMKeychainError.invalidPasswordData }
         
         return nvmKey
+    }
+    
+    private func remove(tag: String) throws {
+        let getquery = try keychainType.createGetQuery(for: tag, accessControl: accessControl)
+        
+        let status = SecItemDelete(getquery as CFDictionary)
+        guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(NVMKeychainStoreError(status)) }
     }
 }

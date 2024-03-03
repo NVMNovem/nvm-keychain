@@ -7,7 +7,15 @@
 
 import Foundation
 
-
+/// The key to be stored in the `Keychain`.
+///
+/// Any `Type` that conforms to the `NVMKey` protocol can be used as a key.
+///
+/// The current `Types` are supported:
+///
+/// - `Data`
+/// - `String`
+///
 public protocol NVMKey {
     
     func keyData() throws -> Data
