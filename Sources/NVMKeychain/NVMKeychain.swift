@@ -35,7 +35,7 @@ public class NVMKeychain {
     public func add<K: NVMKey>(_ value: K, for key: String) throws {
         do {
             try self.store(value: value.keyData(), tag: key)
-        } catch NVMKeychainStoreError.duplicateItem {
+        } catch NVMKeychainError.storeFailed(NVMKeychainStoreError.duplicateItem) {
             try self.update(value, for: key)
         } catch {
             throw error
