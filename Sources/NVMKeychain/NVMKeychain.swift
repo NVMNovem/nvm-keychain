@@ -55,7 +55,7 @@ public class NVMKeychain {
         let addquery = try keychainType.createAddQuery(for: tag, accessControl: accessControl, key: value)
         
         let status = SecItemAdd(addquery as CFDictionary, nil)
-        guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(status: status) }
+        guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(NVMKeychainStoreError(status)) }
     }
     
     private func retrieve<K: NVMKey>(type: K.Type, tag: String) throws -> K {
@@ -64,7 +64,7 @@ public class NVMKeychain {
         var item: CFTypeRef?
         let status = SecItemCopyMatching(getquery as CFDictionary, &item)
         guard status != errSecItemNotFound else { throw NVMKeychainError.notFound }
-        guard status == errSecSuccess else { throw NVMKeychainError.retrieveFailed(status: status) }
+        guard status == errSecSuccess else { throw NVMKeychainError.retrieveFailed(NVMKeychainRetrieveError(status)) }
         
         guard let existingItem = item as? ItemDictionary
         else { throw NVMKeychainError.invalidKeychainType }
