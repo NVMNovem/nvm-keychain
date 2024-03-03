@@ -157,7 +157,7 @@ internal extension NVMKeychainType {
 
 extension NVMKeychain.ItemDictionary {
     
-    fileprivate func setName(_ label: String) -> Self {
+    fileprivate func setName(_ label: String?) -> Self {
         return self.addString(label, forKey: kSecAttrLabel)
     }
     
@@ -211,7 +211,7 @@ extension NVMKeychain.ItemDictionary {
     
     // MARK: - Helper functions
     private func addString(_ value: String?, forKey key: CFString) -> Self {
-        guard let value else { return self }
+        guard let value, !value.isEmpty else { return self }
         
         var mutableDictionary = self
         mutableDictionary.updateValue(value, forKey: key as String)
