@@ -9,12 +9,14 @@ import Foundation
 
 public class NVMKeychainSettings {
     
+    internal let label: String
     internal let accessControl: AccessControl?
     
     private var _synchronize: Bool
     private var _invisible: Bool
     
-    public init(accessControl: AccessControl? = nil) {
+    public init(_ label: String, accessControl: AccessControl? = nil) {
+        self.label = label
         self.accessControl = accessControl
         
         self._synchronize = false

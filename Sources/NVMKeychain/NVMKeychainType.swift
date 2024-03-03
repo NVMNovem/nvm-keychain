@@ -115,6 +115,7 @@ internal extension NVMKeychainType {
             kSecAttrApplicationTag as String: tag,
             kSecValueData as String: key
         ]
+            .setName(settings.label)
             .setAccessControl(settings.accessControl)
             .setSynchronizable(settings)
             .setInvisible(settings)
@@ -135,6 +136,7 @@ internal extension NVMKeychainType {
             kSecReturnAttributes as String: true,
             kSecReturnData as String: true
         ]
+            .setName(settings.label)
             .setAccessControl(settings.accessControl)
             .setSynchronizable(settings)
             .setInvisible(settings)
@@ -154,6 +156,10 @@ internal extension NVMKeychainType {
 }
 
 extension NVMKeychain.ItemDictionary {
+    
+    fileprivate func setName(_ label: String) -> Self {
+        return self.addString(label, forKey: kSecAttrLabel)
+    }
     
     fileprivate func setAccessControl(_ accessControl: NVMKeychainSettings.AccessControl?) -> Self {
         guard let cfAccessControl = accessControl?.cfString else { return self }
