@@ -55,7 +55,6 @@ public class NVMKeychain {
     }
     
     // MARK: - Helper functions
-    
     private func store(value: Data, tag: String) throws {
         let addquery = try keychainType.createAddQuery(for: tag, settings: keychainSettings, key: value)
         

@@ -24,7 +24,6 @@ public class NVMKeychainSettings {
     }
     
     // MARK: - Setters
-    
     public func synchronizable() -> Self {
         self._synchronize = true
         return self
@@ -36,7 +35,6 @@ public class NVMKeychainSettings {
     }
     
     // MARK: - Getters
-    
     internal var cfSynchronize: CFBoolean? {
         return _synchronize ? kCFBooleanTrue : nil
     }
@@ -46,7 +44,6 @@ public class NVMKeychainSettings {
     }
     
     // MARK: - AccessControl
-    
     public enum AccessControl {
         case whenPasscodeSetThisDeviceOnly
         case whenUnlockedThisDeviceOnly

@@ -210,7 +210,6 @@ extension NVMKeychain.ItemDictionary {
     }
     
     // MARK: - Helper functions
-    
     private func addString(_ value: String?, forKey key: CFString) -> Self {
         guard let value else { return self }
         
