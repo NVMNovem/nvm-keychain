@@ -32,7 +32,7 @@ extension NVMKeychainRetrieveError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .status(let status):
-            return String(localized: "Unable to retrieve the key.")
+            return String(localized: "Unable to retrieve the key. OSStatus: \(status)")
         }
     }
 }

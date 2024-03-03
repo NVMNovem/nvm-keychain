@@ -39,7 +39,7 @@ extension NVMKeychainStoreError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .status(let status):
-            return String(localized: "Unable to store the key.")
+            return String(localized: "Unable to store the key. OSStatus: \(status)")
             
         case .duplicateItem:
             return String(localized: "Failed to store the key. The item already exists.")

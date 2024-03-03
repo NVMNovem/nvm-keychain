@@ -34,7 +34,7 @@ internal extension NVMKeychainType {
         let keyIdentifier = try self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
-        var mutableQuery: NVMKeychain.ItemDictionary = [
+        let mutableQuery: NVMKeychain.ItemDictionary = [
             kSecAttrApplicationTag as String: tag,
             kSecValueData as String: key
         ]
@@ -50,7 +50,7 @@ internal extension NVMKeychainType {
         let keyIdentifier = try self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
-        var mutableQuery: NVMKeychain.ItemDictionary = [
+        let mutableQuery: NVMKeychain.ItemDictionary = [
             kSecAttrApplicationTag as String: tag,
             kSecMatchLimit as String: kSecMatchLimitOne,
             kSecReturnAttributes as String: true,

@@ -43,10 +43,10 @@ extension NVMKeychainError: LocalizedError {
     
     var errorDescription: String? {
         switch self {
-        case .storeFailed:
-            return String(localized: "Unable to store the key.")
-        case .retrieveFailed:
-            return String(localized: "Unable to retrieve the key.")
+        case .storeFailed(let nvmKeychainStoreError):
+            return nvmKeychainStoreError.localizedDescription
+        case .retrieveFailed(let nvmKeychainRetrieveError):
+            return nvmKeychainRetrieveError.localizedDescription
             
         case .notFound:
             return String(localized: "Item not found in the keychain.")
