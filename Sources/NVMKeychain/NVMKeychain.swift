@@ -20,26 +20,26 @@ public class NVMKeychain {
     
     typealias ItemDictionary = [String: Any]
     
+    /// Create or update an item in the `Keychain`.
+    ///
+    /// - Note: Will update the value when the item already exists.
+    /// 
+    public func set<K: NVMKey>(_ value: K, for key: String) throws {
+        do {
+            try self.create(value, for: key)
+        } catch NVMKeychainError.storeFailed(NVMKeychainStoreError.duplicateItem) {
+            try self.update(value, for: key)
+        } catch {
+            throw error
+        }
+    }
+    
     /// Create an item in the `Keychain`.
     ///
     /// - Throws: An error when the item already exists. Use `add(_:for:)` when you need to create or update an item.
     ///
     public func create<K: NVMKey>(_ value: K, for key: String) throws {
         try self.store(value: value.keyData(), tag: key)
-    }
-    
-    /// Create or update an item in the `Keychain`.
-    ///
-    /// - Note: Will update the value when the item already exists.
-    /// 
-    public func add<K: NVMKey>(_ value: K, for key: String) throws {
-        do {
-            try self.store(value: value.keyData(), tag: key)
-        } catch NVMKeychainError.storeFailed(NVMKeychainStoreError.duplicateItem) {
-            try self.update(value, for: key)
-        } catch {
-            throw error
-        }
     }
     
     /// Create or update an item in the `Keychain`.

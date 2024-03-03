@@ -26,6 +26,83 @@ internal extension NVMKeychainType {
             return kSecClassKey
         }
     }
+    
+    var attributes: [CFString] {
+        var mutableAttributes: [CFString] = [
+            kSecAttrAccess,
+            kSecAttrAccessControl,
+            kSecAttrAccessible,
+            kSecAttrAccessGroup,
+            kSecAttrSynchronizable,
+            kSecAttrCreationDate,
+            kSecAttrModificationDate,
+            kSecAttrDescription,
+            kSecAttrComment,
+            kSecAttrCreator,
+            kSecAttrType,
+            kSecAttrLabel,
+            kSecAttrIsInvisible,
+            kSecAttrIsNegative,
+            kSecAttrSyncViewHint,
+            kSecAttrPersistantReference,
+        ]
+        #if os(tvOS)
+        mutableAttributes.append(kSecUseUserIndependentKeychain)
+        #endif
+        
+        switch self {
+        case .internetCredentials:
+            mutableAttributes.append(contentsOf: [
+                kSecAttrAccount,
+                kSecAttrService,
+                kSecAttrGeneric,
+                kSecAttrSecurityDomain,
+                kSecAttrServer,
+                kSecAttrProtocol,
+                kSecAttrAuthenticationType,
+                kSecAttrPort,
+                kSecAttrPath
+            ])
+        case .credentials:
+            mutableAttributes.append(contentsOf: [
+                kSecAttrAccount,
+                kSecAttrService,
+                kSecAttrGeneric,
+                kSecAttrSecurityDomain,
+                kSecAttrServer,
+                kSecAttrProtocol,
+                kSecAttrAuthenticationType,
+                kSecAttrPort,
+                kSecAttrPath
+            ])
+        case .key:
+            mutableAttributes.append(contentsOf: [
+                kSecAttrKeyClass,
+                kSecAttrApplicationLabel,
+                kSecAttrApplicationTag,
+                kSecAttrKeyType,
+                kSecAttrPRF,
+                kSecAttrSalt,
+                kSecAttrRounds,
+                kSecAttrKeySizeInBits,
+                kSecAttrEffectiveKeySize,
+                kSecAttrTokenID,
+                
+                kSecAttrIsPermanent,
+                kSecAttrIsSensitive,
+                kSecAttrIsExtractable,
+                kSecAttrCanEncrypt,
+                kSecAttrCanDecrypt,
+                kSecAttrCanDerive,
+                kSecAttrCanSign,
+                kSecAttrCanVerify,
+                kSecAttrCanWrap,
+                kSecAttrCanUnwrap
+            ])
+        }
+        
+        return mutableAttributes
+    }
 }
 
 internal extension NVMKeychainType {
