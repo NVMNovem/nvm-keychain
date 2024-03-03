@@ -3,19 +3,11 @@ import Foundation
 public class NVMKeychain {
     
     private let keychainType: NVMKeychainType
+    private let keychainSettings: NVMKeychainSettings
     
-    private var synchronize: Bool
-    private var accessControl: AccessControl?
-    
-    public init(
-        _ keychainType: NVMKeychainType,
-        synchronize: Bool = false,
-        accessControl: AccessControl? = nil
-    ) {
+    public init(_ keychainType: NVMKeychainType, settings: NVMKeychainSettings) {
         self.keychainType = keychainType
-        
-        self.synchronize = synchronize
-        self.accessControl = accessControl
+        self.keychainSettings = settings
     }
     
     typealias ItemDictionary = [String: Any]
@@ -62,46 +54,25 @@ public class NVMKeychain {
         return try self.remove(tag: key)
     }
     
-    public enum AccessControl {
-        case whenPasscodeSetThisDeviceOnly
-        case whenUnlockedThisDeviceOnly
-        case whenUnlocked
-        case afterFirstUnlockThisDeviceOnly
-        case afterFirstUnlock
-        
-        var cfString: CFString {
-            switch self {
-            case .whenPasscodeSetThisDeviceOnly:
-                return kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly
-            case .whenUnlockedThisDeviceOnly:
-                return kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-            case .whenUnlocked:
-                return kSecAttrAccessibleWhenUnlocked
-            case .afterFirstUnlockThisDeviceOnly:
-                return kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-            case .afterFirstUnlock:
-                return kSecAttrAccessibleAfterFirstUnlock
-            }
-        }
-    }
+    // MARK: - Helper functions
     
     private func store(value: Data, tag: String) throws {
-        let addquery = try keychainType.createAddQuery(for: tag, accessControl: accessControl, key: value)
+        let addquery = try keychainType.createAddQuery(for: tag, settings: keychainSettings, key: value)
         
         let status = SecItemAdd(addquery as CFDictionary, nil)
         guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(NVMKeychainStoreError(status)) }
     }
     
     private func update(value: Data, tag: String) throws {
-        let getquery = try keychainType.createGetQuery(for: tag, accessControl: accessControl)
-        let addquery = try keychainType.createAddQuery(for: tag, accessControl: accessControl, key: value)
+        let getquery = try keychainType.createGetQuery(for: tag, settings: keychainSettings)
+        let addquery = try keychainType.createAddQuery(for: tag, settings: keychainSettings, key: value)
         
         let status = SecItemUpdate(getquery as CFDictionary, addquery as CFDictionary)
         guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(NVMKeychainStoreError(status)) }
     }
     
     private func retrieve<K: NVMKey>(type: K.Type, tag: String) throws -> K {
-        let getquery = try keychainType.createGetQuery(for: tag, accessControl: accessControl)
+        let getquery = try keychainType.createGetQuery(for: tag, settings: keychainSettings)
         
         var item: CFTypeRef?
         let status = SecItemCopyMatching(getquery as CFDictionary, &item)
@@ -119,7 +90,7 @@ public class NVMKeychain {
     }
     
     private func remove(tag: String) throws {
-        let getquery = try keychainType.createGetQuery(for: tag, accessControl: accessControl)
+        let getquery = try keychainType.createGetQuery(for: tag, settings: keychainSettings)
         
         let status = SecItemDelete(getquery as CFDictionary)
         guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(NVMKeychainStoreError(status)) }

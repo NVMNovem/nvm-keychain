@@ -107,7 +107,7 @@ internal extension NVMKeychainType {
 
 internal extension NVMKeychainType {
     
-    func createAddQuery(for tag: String, accessControl: NVMKeychain.AccessControl?, key: Data) throws -> NVMKeychain.ItemDictionary {
+    func createAddQuery(for tag: String, settings: NVMKeychainSettings, key: Data) throws -> NVMKeychain.ItemDictionary {
         let keyIdentifier = try self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
@@ -115,7 +115,9 @@ internal extension NVMKeychainType {
             kSecAttrApplicationTag as String: tag,
             kSecValueData as String: key
         ]
-            .setAccessControl(accessControl)
+            .setAccessControl(settings.accessControl)
+            .setSynchronizable(settings)
+            .setInvisible(settings)
             .setClass(self)
             .setServer(self)
             .setAccount(self)
@@ -123,7 +125,7 @@ internal extension NVMKeychainType {
         return mutableQuery
     }
     
-    func createGetQuery(for tag: String, accessControl: NVMKeychain.AccessControl?) throws -> NVMKeychain.ItemDictionary {
+    func createGetQuery(for tag: String, settings: NVMKeychainSettings) throws -> NVMKeychain.ItemDictionary {
         let keyIdentifier = try self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
@@ -133,7 +135,9 @@ internal extension NVMKeychainType {
             kSecReturnAttributes as String: true,
             kSecReturnData as String: true
         ]
-            .setAccessControl(accessControl)
+            .setAccessControl(settings.accessControl)
+            .setSynchronizable(settings)
+            .setInvisible(settings)
             .setClass(self)
             .setServer(self)
             .setAccount(self)
@@ -151,13 +155,21 @@ internal extension NVMKeychainType {
 
 extension NVMKeychain.ItemDictionary {
     
-    fileprivate func setAccessControl(_ accessControl: NVMKeychain.AccessControl?) -> Self {
+    fileprivate func setAccessControl(_ accessControl: NVMKeychainSettings.AccessControl?) -> Self {
         guard let cfAccessControl = accessControl?.cfString else { return self }
         
         var mutableDictionary = self
         mutableDictionary.updateValue(cfAccessControl, forKey: kSecAttrAccessible as String)
         
         return mutableDictionary
+    }
+    
+    fileprivate func setSynchronizable(_ settings: NVMKeychainSettings) -> Self {
+        return self.addBool(settings.cfSynchronize, forKey: kSecAttrSynchronizable)
+    }
+    
+    fileprivate func setInvisible(_ settings: NVMKeychainSettings) -> Self {
+        return self.addBool(settings.cfInvisible, forKey: kSecAttrIsInvisible)
     }
     
     fileprivate func setClass(_ type: NVMKeychainType) -> Self {
@@ -191,7 +203,18 @@ extension NVMKeychain.ItemDictionary {
         }
     }
     
+    // MARK: - Helper functions
+    
     private func addString(_ value: String?, forKey key: CFString) -> Self {
+        guard let value else { return self }
+        
+        var mutableDictionary = self
+        mutableDictionary.updateValue(value, forKey: key as String)
+        
+        return mutableDictionary
+    }
+    
+    private func addBool(_ value: CFBoolean?, forKey key: CFString) -> Self {
         guard let value else { return self }
         
         var mutableDictionary = self
