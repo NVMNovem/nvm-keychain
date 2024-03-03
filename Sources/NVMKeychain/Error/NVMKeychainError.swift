@@ -8,8 +8,8 @@
 import Foundation
 
 enum NVMKeychainError: Error {
-    case storeFailed(status: OSStatus)
-    case retrieveFailed(status: OSStatus)
+    case storeFailed(NVMKeychainStoreError)
+    case retrieveFailed(NVMKeychainRetrieveError)
     
     case notFound
     
