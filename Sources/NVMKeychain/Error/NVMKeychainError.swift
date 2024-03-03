@@ -8,8 +8,9 @@
 import Foundation
 
 enum NVMKeychainError: Error {
-    case storeFailed(NVMKeychainStoreError)
     case retrieveFailed(NVMKeychainRetrieveError)
+    case storeFailed(NVMKeychainStoreError)
+    case updateFailed(NVMKeychainUpdateError)
     
     case notFound
     
@@ -22,31 +23,35 @@ enum NVMKeychainError: Error {
 extension NVMKeychainError: LocalizedError {
     var errorCode: Int {
         switch self {
-        case .storeFailed:
-            return 1
         case .retrieveFailed:
+            return 1
+        case .storeFailed:
             return 2
-            
-        case .notFound:
+        case .updateFailed:
             return 3
             
-        case .invalidBundleID:
+        case .notFound:
             return 4
-        case .invalidKeychainType:
+            
+        case .invalidBundleID:
             return 5
-        case .invalidPasswordData:
+        case .invalidKeychainType:
             return 6
-        case .tagFailed:
+        case .invalidPasswordData:
             return 7
+        case .tagFailed:
+            return 8
         }
     }
     
     var errorDescription: String? {
         switch self {
-        case .storeFailed(let nvmKeychainStoreError):
-            return nvmKeychainStoreError.localizedDescription
         case .retrieveFailed(let nvmKeychainRetrieveError):
             return nvmKeychainRetrieveError.localizedDescription
+        case .storeFailed(let nvmKeychainStoreError):
+            return nvmKeychainStoreError.localizedDescription
+        case .updateFailed(let nvmKeychainUpdateError):
+            return nvmKeychainUpdateError.localizedDescription
             
         case .notFound:
             return String(localized: "Item not found in the keychain.")
