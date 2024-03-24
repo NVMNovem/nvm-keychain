@@ -172,12 +172,8 @@ internal extension NVMKeychainType {
         return mutableQuery
     }
     
-    static func createGetAllQuery(for tag: String, settings: NVMKeychainSettings, type: Self) throws -> NVMKeychain.ItemDictionary {
-        let keyIdentifier = try Self.getTagIdentifier(tag: tag)
-        guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
-        
+    static func createGetAllQuery(settings: NVMKeychainSettings, type: Self) throws -> NVMKeychain.ItemDictionary {
         let mutableQuery: NVMKeychain.ItemDictionary = [
-            kSecAttrApplicationTag as String: tag,
             kSecMatchLimit as String: kSecMatchLimitAll,
             kSecReturnAttributes as String: true,
             kSecReturnData as String: true

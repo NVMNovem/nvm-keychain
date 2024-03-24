@@ -55,8 +55,8 @@ public class NVMKeychain {
     
     /// Retrieve an item from the `Keychain`.
     ///
-    public static func getAll(as type: NVMKeychainType, keychainSettings: NVMKeychainSettings, for key: String) throws -> [NVMKeychainType] {
-        return try Self.retrieveAll(type: type, keychainSettings: keychainSettings, tag: key)
+    public static func getAll(as type: NVMKeychainType, keychainSettings: NVMKeychainSettings) throws -> [NVMKeychainType] {
+        return try Self.retrieveAll(type: type, keychainSettings: keychainSettings)
     }
     
     /// Remove an item from the `Keychain`.
@@ -99,8 +99,8 @@ public class NVMKeychain {
         return nvmKey
     }
     
-    private static func retrieveAll(type: NVMKeychainType, keychainSettings: NVMKeychainSettings, tag: String) throws -> [NVMKeychainType] {
-        let getquery = try NVMKeychainType.createGetAllQuery(for: tag, settings: keychainSettings, type: type)
+    private static func retrieveAll(type: NVMKeychainType, keychainSettings: NVMKeychainSettings) throws -> [NVMKeychainType] {
+        let getquery = try NVMKeychainType.createGetAllQuery(settings: keychainSettings, type: type)
         
         var item: CFTypeRef?
         let status = SecItemCopyMatching(getquery as CFDictionary, &item)
