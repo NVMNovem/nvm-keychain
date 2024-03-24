@@ -174,9 +174,9 @@ internal extension NVMKeychainType {
     
     static func createGetAllQuery(settings: NVMKeychainSettings, type: Self) throws -> NVMKeychain.ItemDictionary {
         let mutableQuery: NVMKeychain.ItemDictionary = [
-            kSecMatchLimit as String: kSecMatchLimitAll,
             kSecReturnAttributes as String: true,
-            kSecReturnData as String: true
+            kSecReturnData as String: false,
+            kSecMatchLimit as String: kSecMatchLimitAll
         ]
             .setName(settings.label)
             .setClass(type)
@@ -189,6 +189,30 @@ internal extension NVMKeychainType {
         guard let bundleID else { throw NVMKeychainError.invalidBundleID(bundleID) }
         
         return "\(bundleID).keys.\(tag)"
+    }
+}
+
+internal extension NVMKeychainType {
+    
+    func populate(from item: NVMKeychain.ItemDictionary) -> Self? {
+        switch self {
+        case .internetCredentials:
+            if let account = item[kSecAttrAccount as String] as? String {
+                let server = item[kSecAttrServer as String] as? String
+                return NVMKeychainType.internetCredentials(username: account, server: server)
+            } else {
+                return nil
+            }
+        case .credentials:
+            if let account = item[kSecAttrAccount as String] as? String {
+                let server = item[kSecAttrServer as String] as? String
+                return NVMKeychainType.credentials(username: account, server: server)
+            } else {
+                return nil
+            }
+        case .key:
+            return nil
+        }
     }
 }
 

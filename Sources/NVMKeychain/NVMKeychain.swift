@@ -70,6 +70,7 @@ public class NVMKeychain {
         let addquery = try keychainType.createAddQuery(for: tag, settings: keychainSettings, key: value)
         
         let status = SecItemAdd(addquery as CFDictionary, nil)
+        guard status != errSecNotAvailable else { throw NVMKeychainError.keychainDisabled }
         guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(NVMKeychainStoreError(status)) }
     }
     
@@ -78,21 +79,23 @@ public class NVMKeychain {
         let addquery = try keychainType.createAddQuery(for: tag, settings: keychainSettings, key: value)
         
         let status = SecItemUpdate(getquery as CFDictionary, addquery as CFDictionary)
+        guard status != errSecNotAvailable else { throw NVMKeychainError.keychainDisabled }
         guard status == errSecSuccess else { throw NVMKeychainError.storeFailed(NVMKeychainStoreError(status)) }
     }
     
     private func retrieve<K: NVMKey>(type: K.Type, tag: String) throws -> K {
         let getquery = try keychainType.createGetQuery(for: tag, settings: keychainSettings)
         
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(getquery as CFDictionary, &item)
+        var ref: CFTypeRef?
+        let status = SecItemCopyMatching(getquery as CFDictionary, &ref)
         guard status != errSecItemNotFound else { throw NVMKeychainError.notFound }
+        guard status != errSecNotAvailable else { throw NVMKeychainError.keychainDisabled }
         guard status == errSecSuccess else { throw NVMKeychainError.retrieveFailed(NVMKeychainRetrieveError(status)) }
         
-        guard let existingItem = item as? ItemDictionary
+        guard let item = ref as? ItemDictionary
         else { throw NVMKeychainError.invalidKeychainType }
         
-        guard let keyData = existingItem[kSecValueData as String] as? Data,
+        guard let keyData = item[kSecValueData as String] as? Data,
               let nvmKey = type.init(keyData: keyData)
         else { throw NVMKeychainError.invalidPasswordData }
         
@@ -102,32 +105,25 @@ public class NVMKeychain {
     private static func retrieveAll(type: NVMKeychainType, keychainSettings: NVMKeychainSettings) throws -> [NVMKeychainType] {
         let getquery = try NVMKeychainType.createGetAllQuery(settings: keychainSettings, type: type)
         
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(getquery as CFDictionary, &item)
+        var ref: CFTypeRef?
+        let status = SecItemCopyMatching(getquery as CFDictionary, &ref)
         guard status != errSecItemNotFound else { throw NVMKeychainError.notFound }
+        guard status != errSecNotAvailable else { throw NVMKeychainError.keychainDisabled }
         guard status == errSecSuccess else { throw NVMKeychainError.retrieveFailed(NVMKeychainRetrieveError(status)) }
         
-        guard let existingItems = item as? [ItemDictionary]
-        else { throw NVMKeychainError.invalidKeychainType }
-        
         var keychainTypes: [NVMKeychainType] = []
-        for existingItem in existingItems {
-            print("existingItem")
-            switch type {
-            case .internetCredentials(let username, let server):
-                if let account = existingItem[kSecAttrAccount as String] as? String {
-                    let server = existingItem[kSecAttrServer as String] as? String
-                    print("account: \(account)")
-                    keychainTypes.append(NVMKeychainType.internetCredentials(username: account, server: server))
+        if let items = ref as? Array<ItemDictionary> {
+            for item in items {
+                if let keychainType = type.populate(from: item) {
+                    keychainTypes.append(keychainType)
                 }
-            case .credentials(let username, let server):
-                if let account = existingItem[kSecAttrAccount as String] as? String {
-                    let server = existingItem[kSecAttrServer as String] as? String
-                    print("account: \(account)")
-                    keychainTypes.append(NVMKeychainType.credentials(username: account, server: server))
-                }
-            case .key:
-                break
+            }
+        } else {
+            guard let item = ref as? ItemDictionary
+            else { throw NVMKeychainError.invalidKeychainType }
+            
+            if let keychainType = type.populate(from: item) {
+                keychainTypes.append(keychainType)
             }
         }
         

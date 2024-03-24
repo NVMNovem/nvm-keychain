@@ -13,6 +13,7 @@ enum NVMKeychainError: Error {
     case updateFailed(NVMKeychainUpdateError)
     
     case notFound
+    case keychainDisabled
     
     case invalidBundleID(String?)
     case invalidKeychainType
@@ -32,15 +33,17 @@ extension NVMKeychainError: LocalizedError {
             
         case .notFound:
             return 4
+        case .keychainDisabled:
+            return 5
             
         case .invalidBundleID:
-            return 5
-        case .invalidKeychainType:
             return 6
-        case .invalidPasswordData:
+        case .invalidKeychainType:
             return 7
-        case .tagFailed:
+        case .invalidPasswordData:
             return 8
+        case .tagFailed:
+            return 9
         }
     }
     
@@ -55,6 +58,8 @@ extension NVMKeychainError: LocalizedError {
             
         case .notFound:
             return String(localized: "Item not found in the keychain.")
+        case .keychainDisabled:
+            return String(localized: "Keychain is disabled. Your device probably does not have a passcode.")
             
         case .invalidBundleID(let bundleID):
             return String(localized: "The Bundle ID \"\(bundleID ?? "")\" is not a valid Bundle Identifier.")
