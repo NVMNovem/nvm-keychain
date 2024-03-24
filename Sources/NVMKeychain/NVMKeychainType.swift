@@ -26,6 +26,17 @@ internal extension NVMKeychainType {
             return nil
         }
     }
+    
+    var server: String? {
+        switch self {
+        case .internetCredentials(_, let server):
+            return server
+        case .credentials(_, let server):
+            return server
+        case .key:
+            return nil
+        }
+    }
 }
 
 internal extension NVMKeychainType {
@@ -122,7 +133,7 @@ internal extension NVMKeychainType {
 internal extension NVMKeychainType {
     
     func createAddQuery(for tag: String, settings: NVMKeychainSettings, key: Data) throws -> NVMKeychain.ItemDictionary {
-        let keyIdentifier = try self.getTagIdentifier(tag: tag)
+        let keyIdentifier = try Self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
         let mutableQuery: NVMKeychain.ItemDictionary = [
@@ -134,14 +145,14 @@ internal extension NVMKeychainType {
             .setSynchronizable(settings)
             .setInvisible(settings)
             .setClass(self)
-            .setServer(self)
+            .setServer(self.server)
             .setAccount(self)
         
         return mutableQuery
     }
     
     func createGetQuery(for tag: String, settings: NVMKeychainSettings) throws -> NVMKeychain.ItemDictionary {
-        let keyIdentifier = try self.getTagIdentifier(tag: tag)
+        let keyIdentifier = try Self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
         let mutableQuery: NVMKeychain.ItemDictionary = [
@@ -155,14 +166,14 @@ internal extension NVMKeychainType {
             .setSynchronizable(settings)
             .setInvisible(settings)
             .setClass(self)
-            .setServer(self)
+            .setServer(self.server)
             .setAccount(self)
         
         return mutableQuery
     }
     
-    func createGetAllQuery(for tag: String, settings: NVMKeychainSettings) throws -> NVMKeychain.ItemDictionary {
-        let keyIdentifier = try self.getTagIdentifier(tag: tag)
+    static func createGetAllQuery(for tag: String, settings: NVMKeychainSettings, server: String?) throws -> NVMKeychain.ItemDictionary {
+        let keyIdentifier = try Self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
         let mutableQuery: NVMKeychain.ItemDictionary = [
@@ -171,17 +182,12 @@ internal extension NVMKeychainType {
             kSecReturnAttributes as String: true,
             kSecReturnData as String: true
         ]
-            .setName(settings.label)
-            .setAccessControl(settings.accessControl)
-            .setSynchronizable(settings)
-            .setInvisible(settings)
-            .setClass(self)
-            .setServer(self)
+            .setServer(server)
         
         return mutableQuery
     }
     
-    private func getTagIdentifier(tag: String) throws -> String {
+    private static func getTagIdentifier(tag: String) throws -> String {
         let bundleID = Bundle.main.bundleIdentifier
         guard let bundleID else { throw NVMKeychainError.invalidBundleID(bundleID) }
         
@@ -232,15 +238,8 @@ internal extension NVMKeychain.ItemDictionary {
         }
     }
     
-    fileprivate func setServer(_ type: NVMKeychainType) -> Self {
-        switch type {
-        case .internetCredentials(_, let server):
-            return self.addString(server, forKey: kSecAttrServer)
-        case .credentials(_, let server):
-            return self.addString(server, forKey: kSecAttrServer)
-        default:
-            return self
-        }
+    fileprivate func setServer(_ server: String?) -> Self {
+        return self.addString(server, forKey: kSecAttrServer)
     }
     
     // MARK: - Helper functions
