@@ -7,13 +7,13 @@
 
 import Foundation
 
-enum NVMKeychainUpdateError: Error {
+public enum NVMKeychainUpdateError: Error {
     case status(status: OSStatus)
     
     case duplicateItem
 }
 
-extension NVMKeychainUpdateError {
+public extension NVMKeychainUpdateError {
     
     init(_ status: OSStatus) {
         switch status {
@@ -36,7 +36,7 @@ extension NVMKeychainUpdateError: LocalizedError {
         }
     }
     
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .status(let status):
             return String(localized: "Unable to update the key. OSStatus: \(status)")

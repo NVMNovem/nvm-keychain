@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum NVMKeychainError: Error {
+public enum NVMKeychainError: Error {
     case retrieveFailed(NVMKeychainRetrieveError)
     case storeFailed(NVMKeychainStoreError)
     case updateFailed(NVMKeychainUpdateError)
@@ -47,7 +47,7 @@ extension NVMKeychainError: LocalizedError {
         }
     }
     
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .retrieveFailed(let nvmKeychainRetrieveError):
             return nvmKeychainRetrieveError.localizedDescription

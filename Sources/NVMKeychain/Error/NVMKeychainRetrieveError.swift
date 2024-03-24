@@ -7,11 +7,11 @@
 
 import Foundation
 
-enum NVMKeychainRetrieveError: Error {
+public enum NVMKeychainRetrieveError: Error {
     case status(status: OSStatus)
 }
 
-extension NVMKeychainRetrieveError {
+public extension NVMKeychainRetrieveError {
     
     init(_ status: OSStatus) {
         switch status {
@@ -29,7 +29,7 @@ extension NVMKeychainRetrieveError: LocalizedError {
         }
     }
     
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .status(let status):
             return String(localized: "Unable to retrieve the key. OSStatus: \(status)")
