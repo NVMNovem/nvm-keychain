@@ -24,7 +24,7 @@ final class NVMKeychainTests: XCTestCase {
     
     func testGetAll() throws {
         let credentials = try NVMKeychain.getAll(as: .credentials(username: "", server: ""), keychainSettings: NVMKeychainSettings("KeychainTest"))
-        let accounts = credentials.compactMap({ "\($0.server ?? "--"): \($0.username)" }).joined(separator: ", ")
+        let accounts = credentials.compactMap({ "\($0.server ?? "--"): \(String(describing: $0.username))" }).joined(separator: ", ")
         print(accounts)
         XCTAssertGreaterThan(credentials.count, 0, accounts)
     }
