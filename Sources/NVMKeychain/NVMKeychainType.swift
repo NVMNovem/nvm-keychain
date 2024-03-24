@@ -16,6 +16,20 @@ public enum NVMKeychainType {
 
 internal extension NVMKeychainType {
     
+    var username: String? {
+        switch self {
+        case .internetCredentials(let username, _):
+            return username
+        case .credentials(let username, _):
+            return username
+        case .key:
+            return nil
+        }
+    }
+}
+
+internal extension NVMKeychainType {
+    
     var cfString: CFString {
         switch self {
         case .internetCredentials:
@@ -147,6 +161,26 @@ internal extension NVMKeychainType {
         return mutableQuery
     }
     
+    func createGetAllQuery(for tag: String, settings: NVMKeychainSettings) throws -> NVMKeychain.ItemDictionary {
+        let keyIdentifier = try self.getTagIdentifier(tag: tag)
+        guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
+        
+        let mutableQuery: NVMKeychain.ItemDictionary = [
+            kSecAttrApplicationTag as String: tag,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+            kSecReturnAttributes as String: true,
+            kSecReturnData as String: true
+        ]
+            .setName(settings.label)
+            .setAccessControl(settings.accessControl)
+            .setSynchronizable(settings)
+            .setInvisible(settings)
+            .setClass(self)
+            .setServer(self)
+        
+        return mutableQuery
+    }
+    
     private func getTagIdentifier(tag: String) throws -> String {
         let bundleID = Bundle.main.bundleIdentifier
         guard let bundleID else { throw NVMKeychainError.invalidBundleID(bundleID) }
@@ -155,7 +189,7 @@ internal extension NVMKeychainType {
     }
 }
 
-extension NVMKeychain.ItemDictionary {
+internal extension NVMKeychain.ItemDictionary {
     
     fileprivate func setName(_ label: String?) -> Self {
         return self.addString(label, forKey: kSecAttrLabel)

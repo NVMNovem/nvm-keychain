@@ -1,6 +1,13 @@
 import Foundation
 
+
+/// A pure Swift library that allows you to easily access the keychain.
+///
+/// - Note: This project is created and maintained by Novem.
+///
 public class NVMKeychain {
+    
+    internal typealias ItemDictionary = [String: Any]
     
     private let keychainType: NVMKeychainType
     private let keychainSettings: NVMKeychainSettings
@@ -9,8 +16,6 @@ public class NVMKeychain {
         self.keychainType = keychainType
         self.keychainSettings = settings
     }
-    
-    typealias ItemDictionary = [String: Any]
     
     /// Create or update an item in the `Keychain`.
     ///
@@ -46,6 +51,12 @@ public class NVMKeychain {
     ///
     public func get<K: NVMKey>(_ type: K.Type, for key: String) throws -> K {
         return try self.retrieve(type: type, tag: key)
+    }
+    
+    /// Retrieve an item from the `Keychain`.
+    ///
+    public func getAll<K: NVMKey>(_ type: K.Type, for key: String) throws -> [NVMKeychainType] {
+        return try self.retrieveAll(type: type, tag: key)
     }
     
     /// Remove an item from the `Keychain`.
@@ -86,6 +97,29 @@ public class NVMKeychain {
         else { throw NVMKeychainError.invalidPasswordData }
         
         return nvmKey
+    }
+    
+    private func retrieveAll<K: NVMKey>(type: K.Type, tag: String) throws -> [NVMKeychainType] {
+        let getquery = try keychainType.createGetAllQuery(for: tag, settings: keychainSettings)
+        
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(getquery as CFDictionary, &item)
+        guard status != errSecItemNotFound else { throw NVMKeychainError.notFound }
+        guard status == errSecSuccess else { throw NVMKeychainError.retrieveFailed(NVMKeychainRetrieveError(status)) }
+        
+        guard let existingItems = item as? [ItemDictionary]
+        else { throw NVMKeychainError.invalidKeychainType }
+        
+        var keychainTypes: [NVMKeychainType] = []
+        for existingItem in existingItems {
+            print("existingItem")
+            if let account = existingItem[kSecAttrAccount as String] as? String {
+                print("account: \(account)")
+                keychainTypes.append(NVMKeychainType.internetCredentials(username: account, server: nil))
+            }
+        }
+        
+        return keychainTypes
     }
     
     private func remove(tag: String) throws {
