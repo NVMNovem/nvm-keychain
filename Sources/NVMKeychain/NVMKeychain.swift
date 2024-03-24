@@ -55,8 +55,8 @@ public class NVMKeychain {
     
     /// Retrieve an item from the `Keychain`.
     ///
-    public static func getAll(keychainSettings: NVMKeychainSettings, for key: String, server: String? = nil) throws -> [NVMKeychainType] {
-        return try Self.retrieveAll(keychainSettings: keychainSettings, tag: key, server: server)
+    public static func getAll(as type: NVMKeychainType, keychainSettings: NVMKeychainSettings, for key: String) throws -> [NVMKeychainType] {
+        return try Self.retrieveAll(type: type, keychainSettings: keychainSettings, tag: key)
     }
     
     /// Remove an item from the `Keychain`.
@@ -99,8 +99,8 @@ public class NVMKeychain {
         return nvmKey
     }
     
-    private static func retrieveAll(keychainSettings: NVMKeychainSettings, tag: String, server: String? = nil) throws -> [NVMKeychainType] {
-        let getquery = try NVMKeychainType.createGetAllQuery(for: tag, settings: keychainSettings, server: server)
+    private static func retrieveAll(type: NVMKeychainType, keychainSettings: NVMKeychainSettings, tag: String) throws -> [NVMKeychainType] {
+        let getquery = try NVMKeychainType.createGetAllQuery(for: tag, settings: keychainSettings, type: type)
         
         var item: CFTypeRef?
         let status = SecItemCopyMatching(getquery as CFDictionary, &item)
@@ -113,9 +113,21 @@ public class NVMKeychain {
         var keychainTypes: [NVMKeychainType] = []
         for existingItem in existingItems {
             print("existingItem")
-            if let account = existingItem[kSecAttrAccount as String] as? String {
-                print("account: \(account)")
-                keychainTypes.append(NVMKeychainType.internetCredentials(username: account, server: nil))
+            switch type {
+            case .internetCredentials(let username, let server):
+                if let account = existingItem[kSecAttrAccount as String] as? String {
+                    let server = existingItem[kSecAttrServer as String] as? String
+                    print("account: \(account)")
+                    keychainTypes.append(NVMKeychainType.internetCredentials(username: account, server: server))
+                }
+            case .credentials(let username, let server):
+                if let account = existingItem[kSecAttrAccount as String] as? String {
+                    let server = existingItem[kSecAttrServer as String] as? String
+                    print("account: \(account)")
+                    keychainTypes.append(NVMKeychainType.credentials(username: account, server: server))
+                }
+            case .key:
+                break
             }
         }
         

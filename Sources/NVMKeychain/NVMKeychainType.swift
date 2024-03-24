@@ -146,7 +146,7 @@ internal extension NVMKeychainType {
             .setInvisible(settings)
             .setClass(self)
             .setServer(self.server)
-            .setAccount(self)
+            .setAccount(self.username)
         
         return mutableQuery
     }
@@ -167,12 +167,12 @@ internal extension NVMKeychainType {
             .setInvisible(settings)
             .setClass(self)
             .setServer(self.server)
-            .setAccount(self)
+            .setAccount(self.username)
         
         return mutableQuery
     }
     
-    static func createGetAllQuery(for tag: String, settings: NVMKeychainSettings, server: String?) throws -> NVMKeychain.ItemDictionary {
+    static func createGetAllQuery(for tag: String, settings: NVMKeychainSettings, type: Self) throws -> NVMKeychain.ItemDictionary {
         let keyIdentifier = try Self.getTagIdentifier(tag: tag)
         guard let tag = keyIdentifier.data(using: .utf8) else { throw NVMKeychainError.tagFailed }
         
@@ -182,7 +182,8 @@ internal extension NVMKeychainType {
             kSecReturnAttributes as String: true,
             kSecReturnData as String: true
         ]
-            .setServer(server)
+            .setName(settings.label)
+            .setClass(type)
         
         return mutableQuery
     }
@@ -227,15 +228,8 @@ internal extension NVMKeychain.ItemDictionary {
         return mutableDictionary
     }
     
-    fileprivate func setAccount(_ type: NVMKeychainType) -> Self {
-        switch type {
-        case .internetCredentials(let username, _):
-            return self.addString(username, forKey: kSecAttrAccount)
-        case .credentials(let username, _):
-            return self.addString(username, forKey: kSecAttrAccount)
-        default:
-            return self
-        }
+    fileprivate func setAccount(_ username: String?) -> Self {
+        return self.addString(username, forKey: kSecAttrAccount)
     }
     
     fileprivate func setServer(_ server: String?) -> Self {
