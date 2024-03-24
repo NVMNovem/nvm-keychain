@@ -14,7 +14,7 @@ public enum NVMKeychainType {
     case key
 }
 
-internal extension NVMKeychainType {
+public extension NVMKeychainType {
     
     var username: String? {
         switch self {
