@@ -10,7 +10,7 @@ import Foundation
 public enum NVMKeychainType {
     
     case internetCredentials(username: String, server: String?)
-    case credentials(username: String, server: String? = nil)
+    case credentials(username: String)
     case key
 }
 
@@ -20,7 +20,7 @@ public extension NVMKeychainType {
         switch self {
         case .internetCredentials(let username, _):
             return username
-        case .credentials(let username, _):
+        case .credentials(let username):
             return username
         case .key:
             return nil
@@ -31,8 +31,8 @@ public extension NVMKeychainType {
         switch self {
         case .internetCredentials(_, let server):
             return server
-        case .credentials(_, let server):
-            return server
+        case .credentials:
+            return nil
         case .key:
             return nil
         }
@@ -206,7 +206,7 @@ internal extension NVMKeychainType {
         case .credentials:
             if let account = item[kSecAttrAccount as String] as? String {
                 let server = item[kSecAttrServer as String] as? String
-                return NVMKeychainType.credentials(username: account, server: server)
+                return NVMKeychainType.credentials(username: account)
             } else {
                 return nil
             }

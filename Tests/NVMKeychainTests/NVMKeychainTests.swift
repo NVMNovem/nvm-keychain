@@ -12,8 +12,8 @@ final class NVMKeychainTests: XCTestCase {
         
         let settings = NVMKeychainSettings("KeychainTest")
         
-        let keychain = NVMKeychain(.credentials(username: "keychainTest", server: "NVMKeychain"), settings: settings)
-        let keychain2 = NVMKeychain(.credentials(username: "keychainTest2", server: "NVMKeychain2"), settings: settings)
+        let keychain = NVMKeychain(.internetCredentials(username: "keychainTest", server: "NVMKeychain"), settings: settings)
+        let keychain2 = NVMKeychain(.internetCredentials(username: "keychainTest2", server: "NVMKeychain2"), settings: settings)
         try keychain.set(testPassword, for: testKey)
         try keychain2.set(testPassword2, for: testKey2)
             
@@ -23,7 +23,8 @@ final class NVMKeychainTests: XCTestCase {
     }
     
     func testGetAll() throws {
-        let credentials = try NVMKeychain.getAll(as: .credentials(username: "", server: ""), keychainSettings: NVMKeychainSettings("KeychainTest"))
+        let credentials = try NVMKeychain.getAll(as: .internetCredentials(username: "", server: ""),
+                                                 keychainSettings: NVMKeychainSettings("KeychainTest"))
         let accounts = credentials.compactMap({ "\($0.server ?? "--"): \(String(describing: $0.username))" }).joined(separator: ", ")
         print(accounts)
         XCTAssertGreaterThan(credentials.count, 0, accounts)
